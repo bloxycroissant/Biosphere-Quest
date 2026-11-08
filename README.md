@@ -137,27 +137,6 @@ The application is structured around constructivist learning theories and gamifi
 * **Audio Engine:** `expo-audio` integration handling low-latency sound effects.
 * **Animation Framework:** React Native's native-driven `Animated` API for high-performance touch feedback and layout transitions.
 
----
-
-## 📂 Project Directory Structure
-
-```text
-BiosphereQuest/
-├── assets/
-│   ├── BiosphereQuestSoundEffectsandMusic/
-│   │   └── BiosphereQuestSFX/             # Audio files (.mp3 for clicks, correct/wrong cues)
-│   └── images/                            # Mascot assets, backgrounds, & game sprites
-├── src/
-│   ├── components/
-│   │   ├── MinigameMotion.tsx             # Reusable motion wrapper for smooth scene entries
-│   │   ├── QuizGame.tsx                   # Core multi-choice quiz engine component
-│   │   ├── EcoSortGame.tsx                # Eco-Sort Swipe mini-game component
-│   │   ├── MemoryMatchGame.tsx            # Flora & Fauna Memory Match component
-│   │   └── [Other Mini-Game Components]   # Remaining mini-game modules
-│   ├── screens/                           # Dashboard, Digital Notebook, and Level Selectors
-│   └── data/                              # Curriculum question generators and data sets
-├── App.tsx                                # Root application entry point & navigation router
-└── README.md                              # Project documentation
 ⚙️ Getting Started & Installation
 To run Biosphere Quest locally on your development machine:
 
@@ -187,3 +166,25 @@ BloxyCroissant (aka Denise) — Project Owner, Project Leader, UI/UX Designer, U
 cantcomplainn — Project Co-Developer, Main Back-End Developer, Full-Stack Developer
 
 © 2026 Biosphere Quest Development Team. All rights reserved.
+
+---
+
+## 📂 Project Directory Structure
+
+```text
+BiosphereQuest/
+├── assets/
+│   ├── BiosphereQuestSoundEffectsandMusic/
+│   │   └── BiosphereQuestSFX/             # Audio files (.mp3 for clicks, correct/wrong cues)
+│   └── images/                            # Mascot assets, backgrounds, & game sprites
+├── src/
+│   ├── components/
+│   │   ├── MinigameMotion.tsx             # Reusable motion wrapper for smooth scene entries
+│   │   ├── QuizGame.tsx                   # Core multi-choice quiz engine component
+│   │   ├── EcoSortGame.tsx                # Eco-Sort Swipe mini-game component
+│   │   ├── MemoryMatchGame.tsx            # Flora & Fauna Memory Match component
+│   │   └── [Other Mini-Game Components]   # Remaining mini-game modules
+│   ├── screens/                           # Dashboard, Digital Notebook, and Level Selectors
+│   └── data/                              # Curriculum question generators and data sets
+├── App.tsx                                # Root application entry point & navigation router
+└── README.md                              # Project documentation
