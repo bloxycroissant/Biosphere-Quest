@@ -35,9 +35,6 @@
 ## 👥 Project Metadata & Team
 
 * **Title of the App/Game:** Biosphere Quest (Mobilized Learning & Gamified Study System)
-* **Names of Members:** 
-  * Christianne Denise S. Sabando
-  * Clarkent A. Arias
 * **Approved Project Topic:** Gamified Learning & Study Scheduler Platform for Elementary Mathematics & Science.
 * **Game Genre:** Utility & Task - Educational - Quiz Game & Mini-Game.
 * **Target Audience:** Parents/Guardians (for study tracking) and Primary (Grades 1–3) & Intermediate (Grades 4–6) elementary students.
