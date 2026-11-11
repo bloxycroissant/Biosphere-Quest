@@ -8,7 +8,7 @@ import {
 } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, useColorScheme } from "react-native";
 
 import { AnimatedSplashOverlay } from "@/components/animated-icon";
@@ -20,16 +20,23 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 export default function RootLayout(): React.JSX.Element {
   const colorScheme = useColorScheme();
   const pathname = usePathname();
+  const [isSplashActive, setIsSplashActive] = useState<boolean>(true);
 
   useEffect(() => {
-    const hideSplash = async () => {
+    const hideNativeSplash = async () => {
       try {
         await SplashScreen.hideAsync();
       } catch (e) {
         console.log("Error hiding splash screen:", e);
       }
     };
-    hideSplash();
+    hideNativeSplash();
+
+    const timer = setTimeout(() => {
+      setIsSplashActive(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const isWelcomeOrAuth =
@@ -63,8 +70,9 @@ export default function RootLayout(): React.JSX.Element {
           colors={["#090b20", "#28285e", "#0b4070"]}
           style={styles.background}
         >
-          <AnimatedSplashOverlay />
-          {isWelcomeOrAuth || isParentRoute || !isStudentTabRoute ? (
+          {isSplashActive ? (
+            <AnimatedSplashOverlay />
+          ) : isWelcomeOrAuth || isParentRoute || !isStudentTabRoute ? (
             <AnimatedRoute />
           ) : (
             <AppTabs />
