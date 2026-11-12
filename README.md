@@ -192,7 +192,7 @@ BiosphereQuest/
 
 If you wish to use **Biosphere Quest** as a reference, collaborate, or revamp the application for academic or institutional use, please reach out to the project authors and developers:
 - **BloxyCroissant (aka Denise: Owner of the App)** — Project Owner, Project Leader, UI/UX Designer, UI/UX Developer, Lead Developer, Game Developer, Main Front-End Developer, Full-Stack Developer
-- **cantcomplainn** — Project Co-Developer, Main Back-End Developer, Full-Stack Developer
+- **cantcomplainn** — Project Co-Developer, UI & Authentication Developer, Main Back-End Developer, Full-Stack Developer
 
 ---
 
