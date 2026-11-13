@@ -29,13 +29,12 @@ if (Platform.OS !== "web") {
 }
 
 const USE_NATIVE_DRIVER = Platform.OS !== "web";
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
 // Custom Assets
 const ASTRO_IMG = require("../../assets/BiosphereQuestAssets/Astro (Biosphere Quest Mascot).png");
 const STELLA_IMG = require("../../assets/BiosphereQuestAssets/Stella (Biosphere Quest Mascot).png");
 const LOGO_IMG = require("../../assets/BiosphereQuestAssets/Biosphere Quest Logo.png");
-const LOFI_AUDIO = require("../../assets/BiosphereQuestSoundEffectsandMusic/Lofi Splash Screen Official.mp3");
 const CLICK_SFX = require("../../assets/BiosphereQuestSoundEffectsandMusic/BiosphereQuestSFX/Button_Click_SFX.mp3");
 
 const TEASER_TIPS = [
@@ -115,7 +114,7 @@ export default function RootLayout(): React.JSX.Element {
       <ProgressProvider>
         <StatusBar style="light" />
         <LinearGradient
-          colors={["#080b1e", "#1b2354", "#123c69"]}
+          colors={["#0b0f29", "#151b4a", "#0d2847"]}
           style={styles.background}
         >
           {isWelcomeOrAuth || isParentRoute || !isStudentTabRoute ? (
@@ -142,7 +141,6 @@ function CustomSplashScreen({
 }): React.JSX.Element {
   const floatAstro = useRef(new Animated.Value(0)).current;
   const floatStella = useRef(new Animated.Value(0)).current;
-  const stellaReachAnim = useRef(new Animated.Value(0)).current; // Stella catching stars animation
   const orbitAnim = useRef(new Animated.Value(0)).current;
   const reverseOrbitAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
@@ -153,23 +151,32 @@ function CustomSplashScreen({
   const tutorialScale = useRef(new Animated.Value(0.8)).current;
   const tutorialFade = useRef(new Animated.Value(0)).current;
 
-  // Exact 32-second track match
-  const SPLASH_DURATION_MS = 32000;
+  // Set precisely to 15 seconds (15000ms)
+  const SPLASH_DURATION_MS = 15000;
   const [teaserIndex, setTeaserIndex] = useState<number>(0);
-  const [secondsLeft, setSecondsLeft] = useState<number>(32);
-  const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(true);
-
-  const audioRef = useRef<any>(null);
+  const [secondsLeft, setSecondsLeft] = useState<number>(15);
 
   const [poppedStars, setPoppedStars] = useState<number>(0);
+
   const [floatingStars, setFloatingStars] = useState<
     Array<{ id: number; x: number; y: number; scale: Animated.Value }>
   >([
-    { id: 1, x: width * 0.2, y: height * 0.28, scale: new Animated.Value(1) },
-    { id: 2, x: width * 0.75, y: height * 0.22, scale: new Animated.Value(1) },
-    { id: 3, x: width * 0.15, y: height * 0.65, scale: new Animated.Value(1) },
-    { id: 4, x: width * 0.8, y: height * 0.6, scale: new Animated.Value(1) },
+    { id: 1, x: width * 0.2, y: 150, scale: new Animated.Value(1) },
+    { id: 2, x: width * 0.75, y: 130, scale: new Animated.Value(1) },
+    { id: 3, x: width * 0.15, y: 350, scale: new Animated.Value(1) },
+    { id: 4, x: width * 0.8, y: 320, scale: new Animated.Value(1) },
   ]);
+
+  const [burstParticles, setBurstParticles] = useState<
+    Array<{
+      id: string;
+      x: number;
+      y: number;
+      animX: Animated.Value;
+      animY: Animated.Value;
+      opacity: Animated.Value;
+    }>
+  >([]);
 
   const [showTutorial, setShowTutorial] = useState<boolean>(false);
   const [tutorialIndex, setTutorialIndex] = useState<number>(0);
@@ -187,21 +194,10 @@ function CustomSplashScreen({
   };
 
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        audioRef.current = new (window as any).Audio(LOFI_AUDIO);
-        audioRef.current.loop = true;
-        audioRef.current.volume = 0.7;
-        audioRef.current.play().catch(() => {});
-      }
-    } catch (e) {
-      console.log("Audio play error:", e);
-    }
-
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatAstro, {
-          toValue: -14,
+          toValue: -12,
           duration: 1300,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: USE_NATIVE_DRIVER,
@@ -210,29 +206,6 @@ function CustomSplashScreen({
           toValue: 0,
           duration: 1300,
           easing: Easing.inOut(Easing.sin),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-      ]),
-    ).start();
-
-    // Stella Reaching / Catching Motion Loop
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(stellaReachAnim, {
-          toValue: -18,
-          duration: 700,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        Animated.timing(stellaReachAnim, {
-          toValue: 4,
-          duration: 600,
-          easing: Easing.in(Easing.ease),
-          useNativeDriver: USE_NATIVE_DRIVER,
-        }),
-        Animated.timing(stellaReachAnim, {
-          toValue: 0,
-          duration: 500,
           useNativeDriver: USE_NATIVE_DRIVER,
         }),
       ]),
@@ -241,7 +214,7 @@ function CustomSplashScreen({
     Animated.loop(
       Animated.sequence([
         Animated.timing(floatStella, {
-          toValue: 12,
+          toValue: 10,
           duration: 1450,
           easing: Easing.inOut(Easing.sin),
           useNativeDriver: USE_NATIVE_DRIVER,
@@ -276,7 +249,7 @@ function CustomSplashScreen({
     Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
-          toValue: 1.07,
+          toValue: 1.05,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
           useNativeDriver: USE_NATIVE_DRIVER,
@@ -331,7 +304,6 @@ function CustomSplashScreen({
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearInterval(countdownInterval);
-          if (audioRef.current) audioRef.current.pause();
           onFinish();
           return 0;
         }
@@ -342,7 +314,6 @@ function CustomSplashScreen({
     return () => {
       clearInterval(teaserInterval);
       clearInterval(countdownInterval);
-      if (audioRef.current) audioRef.current.pause();
     };
   }, []);
 
@@ -366,6 +337,11 @@ function CustomSplashScreen({
     ]).start();
   };
 
+  const closeTutorial = () => {
+    playClickSfx();
+    setShowTutorial(false);
+  };
+
   const nextTutorialStep = () => {
     playClickSfx();
     if (tutorialIndex < TUTORIAL_STEPS.length - 1) {
@@ -383,43 +359,84 @@ function CustomSplashScreen({
       ]).start();
       setTutorialIndex((prev) => prev + 1);
     } else {
-      if (audioRef.current) audioRef.current.pause();
+      setShowTutorial(false);
       onFinish();
     }
   };
 
-  const toggleMusic = () => {
+  const handlePopBubbleStar = (
+    id: number,
+    starX: number,
+    starY: number,
+    starScale: Animated.Value,
+  ) => {
     playClickSfx();
-    try {
-      if (!audioRef.current) return;
-      if (isPlayingMusic) {
-        audioRef.current.pause();
-        setIsPlayingMusic(false);
-      } else {
-        audioRef.current.play();
-        setIsPlayingMusic(true);
-      }
-    } catch (e) {
-      console.log("Audio toggle error:", e);
-    }
-  };
+    setPoppedStars((prev) => prev + 150);
 
-  const handlePopStar = (id: number, starScale: Animated.Value) => {
-    playClickSfx();
     Animated.sequence([
       Animated.timing(starScale, {
-        toValue: 1.6,
-        duration: 120,
+        toValue: 1.8,
+        duration: 100,
         useNativeDriver: USE_NATIVE_DRIVER,
       }),
       Animated.timing(starScale, {
         toValue: 0,
-        duration: 150,
+        duration: 120,
         useNativeDriver: USE_NATIVE_DRIVER,
       }),
     ]).start(() => {
-      setPoppedStars((prev) => prev + 100);
       setFloatingStars((prev) => prev.filter((star) => star.id !== id));
+
+      const newFragments = [0, 1, 2].map((i) => {
+        const angle = (i * 2 * Math.PI) / 3;
+        const dist = 50 + Math.random() * 30;
+        const animX = new Animated.Value(0);
+        const animY = new Animated.Value(0);
+        const opacity = new Animated.Value(1);
+
+        Animated.parallel([
+          Animated.timing(animX, {
+            toValue: Math.cos(angle) * dist,
+            duration: 450,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }),
+          Animated.timing(animY, {
+            toValue: Math.sin(angle) * dist,
+            duration: 450,
+            easing: Easing.out(Easing.quad),
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0,
+            duration: 450,
+            useNativeDriver: USE_NATIVE_DRIVER,
+          }),
+        ]).start();
+
+        return {
+          id: `${id}-frag-${i}-${Date.now()}`,
+          x: starX,
+          y: starY,
+          animX,
+          animY,
+          opacity,
+        };
+      });
+
+      setBurstParticles((prev) => [...prev, ...newFragments]);
+
+      setTimeout(() => {
+        setFloatingStars((current) => [
+          ...current,
+          {
+            id: Date.now() + Math.random(),
+            x: 60 + Math.random() * (width - 120),
+            y: 120 + Math.random() * 260,
+            scale: new Animated.Value(0),
+          },
+        ]);
+      }, 1500);
     });
   };
 
@@ -438,14 +455,15 @@ function CustomSplashScreen({
     outputRange: ["0%", "100%"],
   });
 
+  const runnerTranslateX = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, Math.min(width, 420) * 0.72],
+  });
+
   return (
     <View style={styles.splashContainer}>
       <View style={styles.topBar}>
-        <Pressable style={styles.pillBtn} onPress={toggleMusic}>
-          <Text style={styles.pillBtnText}>
-            {isPlayingMusic ? "🎵 Lofi: On" : "🔇 Lofi: Off"}
-          </Text>
-        </Pressable>
+        <View />
 
         <View style={styles.rightTopControls}>
           <Pressable style={styles.tutorialBtn} onPress={openTutorial}>
@@ -456,7 +474,6 @@ function CustomSplashScreen({
             style={styles.skipBtn}
             onPress={() => {
               playClickSfx();
-              if (audioRef.current) audioRef.current.pause();
               onFinish();
             }}
           >
@@ -465,14 +482,20 @@ function CustomSplashScreen({
         </View>
       </View>
 
-      {/* Poppable Floating Stars */}
       {floatingStars.map((star) => (
         <Pressable
           key={star.id}
-          style={[styles.popStarItem, { left: star.x, top: star.y }]}
-          onPress={() => handlePopStar(star.id, star.scale)}
+          style={[styles.popBubbleItem, { left: star.x, top: star.y }]}
+          onPress={() =>
+            handlePopBubbleStar(star.id, star.x, star.y, star.scale)
+          }
         >
-          <Animated.View style={{ transform: [{ scale: star.scale }] }}>
+          <Animated.View
+            style={[
+              styles.bubbleCircle,
+              { transform: [{ scale: star.scale }] },
+            ]}
+          >
             <Animated.Text style={[styles.starEmoji, { opacity: twinkleAnim }]}>
               ⭐
             </Animated.Text>
@@ -480,8 +503,28 @@ function CustomSplashScreen({
         </Pressable>
       ))}
 
+      {burstParticles.map((frag) => (
+        <Animated.View
+          key={frag.id}
+          style={[
+            styles.fragmentItem,
+            {
+              left: frag.x,
+              top: frag.y,
+              opacity: frag.opacity,
+              transform: [
+                { translateX: frag.animX },
+                { translateY: frag.animY },
+              ],
+            },
+          ]}
+        >
+          <Text style={styles.fragmentEmoji}>✨</Text>
+        </Animated.View>
+      ))}
+
       <View style={styles.scoreBadge}>
-        <Text style={styles.scoreText}>⭐ Star XP: +{poppedStars}</Text>
+        <Text style={styles.scoreText}>⭐ Bubble XP: +{poppedStars}</Text>
       </View>
 
       <Animated.View
@@ -512,7 +555,6 @@ function CustomSplashScreen({
         style={[styles.auraCircle, { transform: [{ scale: pulseAnim }] }]}
       />
 
-      {/* Custom Mascot Showcase with Stella Catching Stars Animation */}
       <View style={styles.mascotShowcase}>
         <Animated.Image
           source={ASTRO_IMG}
@@ -533,17 +575,7 @@ function CustomSplashScreen({
           source={STELLA_IMG}
           style={[
             styles.mascotImage,
-            {
-              transform: [
-                { translateY: Animated.add(floatStella, stellaReachAnim) },
-                {
-                  rotate: stellaReachAnim.interpolate({
-                    inputRange: [-18, 0, 4],
-                    outputRange: ["-8deg", "0deg", "3deg"],
-                  }),
-                },
-              ],
-            },
+            { transform: [{ translateY: floatStella }] },
           ]}
           resizeMode="contain"
         />
@@ -559,7 +591,9 @@ function CustomSplashScreen({
         style={[styles.titleBlock, { transform: [{ scale: pulseAnim }] }]}
       >
         <Text style={styles.title}>Biosphere Quest</Text>
-        <Text style={styles.subtitle}>Explore • Play • Discover Earth!</Text>
+        <Text style={styles.subtitle}>
+          Rocket your knowledge from Grade 1 to Grade 6
+        </Text>
       </Animated.View>
 
       <View style={styles.teaserCard}>
@@ -570,13 +604,28 @@ function CustomSplashScreen({
       </View>
 
       <View style={styles.loaderSection}>
+        <View style={styles.runnerTrackContainer}>
+          <Animated.View
+            style={[
+              styles.runnerChaser,
+              { transform: [{ translateX: runnerTranslateX }] },
+            ]}
+          >
+            <Animated.Image
+              source={STELLA_IMG}
+              style={styles.runnerStellaImg}
+              resizeMode="contain"
+            />
+          </Animated.View>
+        </View>
+
         <View style={styles.loaderTrack}>
           <Animated.View
             style={[styles.loaderFill, { width: progressWidth }]}
           />
         </View>
         <Text style={styles.loadingLabel}>
-          Stella Catching Stars... ({secondsLeft}s left) • Tap Stars! ⭐
+          Stella Racing... ({secondsLeft}s left) • Pop Star Bubbles! 🫧⭐
         </Text>
       </View>
 
@@ -590,6 +639,10 @@ function CustomSplashScreen({
               { transform: [{ scale: tutorialScale }] },
             ]}
           >
+            <Pressable style={styles.closeModalBtn} onPress={closeTutorial}>
+              <Text style={styles.closeModalBtnText}>✕</Text>
+            </Pressable>
+
             <Text style={styles.tutorialIcon}>
               {TUTORIAL_STEPS[tutorialIndex].icon}
             </Text>
@@ -672,7 +725,7 @@ const styles = StyleSheet.create({
   splashOverlay: {
     zIndex: 9999,
     elevation: 9999,
-    backgroundColor: "#080b1e",
+    backgroundColor: "#0b0f29",
   },
   splashContainer: {
     flex: 1,
@@ -695,21 +748,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  pillBtn: {
-    backgroundColor: "rgba(30, 41, 82, 0.85)",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: "#38bdf8",
-  },
-  pillBtnText: {
-    color: "#ffffff",
-    fontSize: 11,
-    fontWeight: "800",
-  },
   tutorialBtn: {
-    backgroundColor: "rgba(192, 132, 252, 0.3)",
+    backgroundColor: "rgba(192, 132, 252, 0.25)",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -732,13 +772,35 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "900",
   },
-  popStarItem: {
+  popBubbleItem: {
     position: "absolute",
     zIndex: 15,
-    padding: 10,
+    padding: 8,
+  },
+  bubbleCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(56, 189, 248, 0.2)",
+    borderWidth: 2,
+    borderColor: "rgba(250, 204, 21, 0.8)",
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#38bdf8",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 8,
   },
   starEmoji: {
-    fontSize: 28,
+    fontSize: 22,
+  },
+  fragmentItem: {
+    position: "absolute",
+    zIndex: 16,
+  },
+  fragmentEmoji: {
+    fontSize: 16,
   },
   scoreBadge: {
     position: "absolute",
@@ -759,11 +821,11 @@ const styles = StyleSheet.create({
   },
   outerOrbit: {
     position: "absolute",
-    width: Math.min(width, 420) * 0.84,
-    height: Math.min(width, 420) * 0.84,
-    borderRadius: (Math.min(width, 420) * 0.84) / 2,
+    width: Math.min(width, 420) * 0.82,
+    height: Math.min(width, 420) * 0.82,
+    borderRadius: (Math.min(width, 420) * 0.82) / 2,
     borderWidth: 2,
-    borderColor: "rgba(56, 189, 248, 0.25)",
+    borderColor: "rgba(99, 102, 241, 0.3)",
     borderStyle: "dashed",
     alignItems: "center",
     justifyContent: "center",
@@ -773,9 +835,9 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "rgba(30, 41, 82, 0.9)",
+    backgroundColor: "rgba(21, 27, 74, 0.9)",
     borderWidth: 1.5,
-    borderColor: "#38bdf8",
+    borderColor: "#818cf8",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -786,125 +848,141 @@ const styles = StyleSheet.create({
   orbitEmoji: { fontSize: 18 },
   innerOrbit: {
     position: "absolute",
-    width: Math.min(width, 420) * 0.58,
-    height: Math.min(width, 420) * 0.58,
-    borderRadius: (Math.min(width, 420) * 0.58) / 2,
+    width: Math.min(width, 420) * 0.56,
+    height: Math.min(width, 420) * 0.56,
+    borderRadius: (Math.min(width, 420) * 0.56) / 2,
     borderWidth: 1.5,
-    borderColor: "rgba(250, 204, 21, 0.28)",
+    borderColor: "rgba(250, 204, 21, 0.3)",
   },
   auraCircle: {
     position: "absolute",
-    width: 210,
-    height: 210,
-    borderRadius: 105,
-    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(99, 102, 241, 0.15)",
   },
   mascotShowcase: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 10,
     gap: 6,
   },
   mascotImage: {
-    width: 100,
-    height: 120,
-  },
-  centerLogo: {
-    width: 115,
+    width: 95,
     height: 115,
   },
+  centerLogo: {
+    width: 110,
+    height: 110,
+  },
   curriculumPill: {
-    backgroundColor: "rgba(192, 132, 252, 0.22)",
+    backgroundColor: "rgba(192, 132, 252, 0.2)",
     paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: "#c084fc",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   curriculumText: {
     color: "#f3e8ff",
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: "800",
     letterSpacing: 0.5,
   },
   titleBlock: {
     alignItems: "center",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   title: {
-    fontSize: 34,
+    fontSize: 32,
     fontWeight: "900",
     color: "#ffffff",
     textAlign: "center",
     letterSpacing: 1,
-    textShadowColor: "#38bdf8",
+    textShadowColor: "#818cf8",
     textShadowOffset: { width: 0, height: 0 },
-    textShadowRadius: 16,
+    textShadowRadius: 14,
   },
   subtitle: {
-    fontSize: 14,
-    fontWeight: "800",
-    color: "#facc15",
+    fontSize: 13,
+    fontWeight: "700",
+    color: "#cbd5e1",
     marginTop: 4,
-    letterSpacing: 0.8,
+    letterSpacing: 0.5,
   },
   teaserCard: {
     width: "92%",
     maxWidth: 380,
-    backgroundColor: "rgba(18, 60, 105, 0.85)",
+    backgroundColor: "rgba(21, 27, 74, 0.85)",
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: "rgba(56, 189, 248, 0.45)",
-    paddingVertical: 12,
+    borderColor: "rgba(99, 102, 241, 0.4)",
+    paddingVertical: 10,
     paddingHorizontal: 16,
     alignItems: "center",
-    marginBottom: 24,
+    marginBottom: 20,
   },
   teaserHeader: {
     fontSize: 10,
     fontWeight: "900",
-    color: "#38bdf8",
+    color: "#818cf8",
     letterSpacing: 1.2,
     marginBottom: 4,
   },
   teaserBody: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
     color: "#ffffff",
     textAlign: "center",
   },
   loaderSection: {
     position: "absolute",
-    bottom: 40,
-    width: Math.min(width, 420) * 0.75,
+    bottom: 36,
+    width: Math.min(width, 420) * 0.78,
     alignItems: "center",
+  },
+  runnerTrackContainer: {
+    width: "100%",
+    height: 32,
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 2,
+  },
+  runnerChaser: {
+    position: "absolute",
+    left: 0,
+    zIndex: 5,
+  },
+  runnerStellaImg: {
+    width: 32,
+    height: 32,
   },
   loaderTrack: {
     width: "100%",
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: "rgba(255, 255, 255, 0.14)",
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
     overflow: "hidden",
     borderWidth: 1.5,
-    borderColor: "#38bdf8",
-    marginBottom: 8,
+    borderColor: "#818cf8",
+    marginBottom: 6,
   },
   loaderFill: {
     height: "100%",
-    borderRadius: 6,
+    borderRadius: 5,
     backgroundColor: "#6366f1",
   },
   loadingLabel: {
-    color: "#bae6fd",
+    color: "#cbd5e1",
     fontSize: 11,
     fontWeight: "800",
     letterSpacing: 0.5,
   },
   tutorialOverlay: {
     ...StyleSheet.absoluteFill,
-    backgroundColor: "rgba(8, 11, 30, 0.92)",
+    backgroundColor: "rgba(11, 15, 41, 0.92)",
     alignItems: "center",
     justifyContent: "center",
     zIndex: 9999,
@@ -913,7 +991,7 @@ const styles = StyleSheet.create({
   tutorialCard: {
     width: "90%",
     maxWidth: 360,
-    backgroundColor: "#123c69",
+    backgroundColor: "#151b4a",
     borderRadius: 28,
     borderWidth: 3,
     borderColor: "#6366f1",
@@ -924,6 +1002,25 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.7,
     shadowRadius: 20,
     elevation: 12,
+  },
+  closeModalBtn: {
+    position: "absolute",
+    top: 14,
+    right: 16,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.2)",
+    zIndex: 5,
+  },
+  closeModalBtnText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "900",
   },
   tutorialIcon: {
     fontSize: 48,
@@ -939,7 +1036,7 @@ const styles = StyleSheet.create({
   tutorialDesc: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#e2e8f0",
+    color: "#cbd5e1",
     textAlign: "center",
     lineHeight: 20,
     marginBottom: 24,
