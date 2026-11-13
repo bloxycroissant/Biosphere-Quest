@@ -13,7 +13,7 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  View
+  View,
 } from "react-native";
 
 interface GradeLevel {
@@ -89,6 +89,7 @@ const gradeLevels: GradeLevel[] = [
 ];
 
 const astro = require("../../assets/BiosphereQuestAssets/Astro (Biosphere Quest Mascot).png");
+const WELCOME_AUDIO = require("../../assets/BiosphereQuestSoundEffectsandMusic/Welcome Screen (Official).mp3");
 const STORAGE_KEY = "@biosphere_profile_data_v1";
 
 export default function WelcomeWizardScreen(): React.JSX.Element {
@@ -98,6 +99,9 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
   const [selectedGrade, setSelectedGrade] = useState<number | null>(null);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isPlayingMusic, setIsPlayingMusic] = useState<boolean>(true);
+
+  const audioRef = useRef<any>(null);
 
   const [fadeAnim] = useState(() => new Animated.Value(1));
   const [slideAnim] = useState(() => new Animated.Value(0));
@@ -105,11 +109,12 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
   const [scaleButtonAnim] = useState(() => new Animated.Value(1));
   const [boxScales] = useState<Record<string, Animated.Value>>(() => {
     const scales: Record<string, Animated.Value> = {};
-    [...gradeLevels.map((grade) => String(grade.level)), ...SUBJECT_META.map((item) => item.name)].forEach(
-      (key) => {
-        scales[key] = new Animated.Value(1);
-      },
-    );
+    [
+      ...gradeLevels.map((grade) => String(grade.level)),
+      ...SUBJECT_META.map((item) => item.name),
+    ].forEach((key) => {
+      scales[key] = new Animated.Value(1);
+    });
     return scales;
   });
 
@@ -131,12 +136,53 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
     ]).start(() => callback());
   };
 
+  const playWelcomeAudio = () => {
+    try {
+      if (typeof window !== "undefined") {
+        if (!audioRef.current) {
+          audioRef.current = new (window as any).Audio(WELCOME_AUDIO);
+          audioRef.current.loop = true;
+          audioRef.current.volume = 0.7;
+        }
+        audioRef.current
+          .play()
+          .then(() => {
+            setIsPlayingMusic(true);
+          })
+          .catch((e: any) => {
+            console.log("Autoplay blocked, waiting for user interaction:", e);
+          });
+      }
+    } catch (e) {
+      console.log("Welcome audio initialization error:", e);
+    }
+  };
+
+  const toggleMusic = () => {
+    try {
+      if (!audioRef.current) {
+        playWelcomeAudio();
+        return;
+      }
+      if (isPlayingMusic) {
+        audioRef.current.pause();
+        setIsPlayingMusic(false);
+      } else {
+        audioRef.current.play();
+        setIsPlayingMusic(true);
+      }
+    } catch (e) {
+      console.log("Toggle music error:", e);
+    }
+  };
+
   // Intercept both UI Back button and Android hardware back press
   const handleBackNavigation = useCallback(() => {
     setErrorMessage(null);
     if (step > 1) {
       setStep((prev) => prev - 1);
     } else {
+      if (audioRef.current) audioRef.current.pause();
       if (router.canGoBack()) {
         router.back();
       } else {
@@ -145,6 +191,16 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
     }
     return true;
   }, [step]);
+
+  useEffect(() => {
+    playWelcomeAudio();
+
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const backSubscription = BackHandler.addEventListener(
@@ -190,6 +246,9 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
   }, [step, fadeAnim, slideAnim]);
 
   const animateButtonPress = (callback: () => void) => {
+    // Also trigger audio play on tap if browser blocked autoplay previously
+    playWelcomeAudio();
+
     Animated.sequence([
       Animated.timing(scaleButtonAnim, {
         toValue: 0.96,
@@ -205,6 +264,7 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
   };
 
   const toggleSubject = (subject: string): void => {
+    playWelcomeAudio();
     setErrorMessage(null);
     animateItemPress(subject, () => {
       setSelectedSubjects((current) =>
@@ -216,6 +276,7 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
   };
 
   const handleSelectGrade = (level: number) => {
+    playWelcomeAudio();
     setErrorMessage(null);
     animateItemPress(level, () => {
       setSelectedGrade(level);
@@ -223,6 +284,7 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
   };
 
   const handleNextStep = (): void => {
+    playWelcomeAudio();
     if (step === 1 && !fullName.trim()) {
       setErrorMessage("⚠️ Please input or enter your full name to continue.");
       return;
@@ -264,6 +326,7 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
 
     animateButtonPress(async () => {
       try {
+        if (audioRef.current) audioRef.current.pause();
         await AsyncStorage.removeItem(STORAGE_KEY);
 
         await AsyncStorage.setItem("explorerName", fullName.trim());
@@ -305,9 +368,11 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
         <View style={styles.header}>
           <Pressable
             onPress={() => {
+              playWelcomeAudio();
               if (step > 1) {
                 setStep(step - 1);
               } else {
+                if (audioRef.current) audioRef.current.pause();
                 if (router.canGoBack()) {
                   router.back();
                 } else {
@@ -318,6 +383,14 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
           >
             <Text style={styles.back}>Back</Text>
           </Pressable>
+
+          {/* Added quick music toggle pill to the header so users can ensure audio is active */}
+          <Pressable style={styles.musicTogglePill} onPress={toggleMusic}>
+            <Text style={styles.musicToggleText}>
+              {isPlayingMusic ? "🎵 Music: On" : "🔇 Music: Off"}
+            </Text>
+          </Pressable>
+
           <Text style={styles.stepIndicator}>Step {step} of 4</Text>
         </View>
 
@@ -325,6 +398,7 @@ export default function WelcomeWizardScreen(): React.JSX.Element {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          onTouchStart={playWelcomeAudio}
         >
           <Animated.View
             style={{
@@ -630,6 +704,19 @@ const styles = StyleSheet.create({
     paddingBottom: 10,
   },
   back: { color: "#e582ff", fontWeight: "800", fontSize: 16 },
+  musicTogglePill: {
+    backgroundColor: "rgba(98, 92, 255, 0.25)",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#625cff",
+  },
+  musicToggleText: {
+    color: "#d8d4ff",
+    fontSize: 11,
+    fontWeight: "800",
+  },
   stepIndicator: { color: "#8a9fc4", fontWeight: "700", fontSize: 14 },
   scrollContent: {
     flexGrow: 1,
