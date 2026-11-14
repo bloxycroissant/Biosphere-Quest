@@ -3,6 +3,7 @@ import {
   type Lesson,
   type Subject,
 } from "@/app/components/curriculum";
+import ChildFriendlyLoader from "@/components/ChildFriendlyLoader";
 import { GradientSafeAreaView as SafeAreaView } from "@/components/gradient-safe-area";
 import { useProgress } from "@/hooks/use-progress";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -95,6 +96,7 @@ const learnerOutcomes: Record<string, string[]> = {
 
 export default function ExploreScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{ autoOpenSubject?: string }>();
+  const [isLoading, setIsLoading] = useState(true);
   const [grade, setGrade] = useState(1);
   const [activeSubject, setActiveSubject] = useState<Subject | null>(null);
   const [showNotes, setShowNotes] = useState(false);
@@ -281,12 +283,18 @@ export default function ExploreScreen(): React.JSX.Element {
   };
 
   useEffect(() => {
-    void fetchActiveGrade();
+    setIsLoading(true);
+    fetchActiveGrade().finally(() => {
+      setIsLoading(false);
+    });
   }, []);
 
   useFocusEffect(
     useCallback(() => {
-      void fetchActiveGrade();
+      setIsLoading(true);
+      fetchActiveGrade().finally(() => {
+        setIsLoading(false);
+      });
     }, []),
   );
 
@@ -342,6 +350,12 @@ export default function ExploreScreen(): React.JSX.Element {
       return () => subscription.remove();
     }, [handleBack]),
   );
+
+  if (isLoading) {
+    return (
+      <ChildFriendlyLoader message="Loading your space station & quests... 🚀" />
+    );
+  }
 
   return (
     <View style={styles.screenContainer}>

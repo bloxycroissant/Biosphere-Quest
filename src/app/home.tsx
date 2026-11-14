@@ -1,4 +1,5 @@
 import { curriculum, type Subject } from "@/app/components/curriculum";
+import ChildFriendlyLoader from "@/components/ChildFriendlyLoader";
 import { GradientSafeAreaView } from "@/components/gradient-safe-area";
 import { normalizeXpValue, useProgress } from "@/hooks/use-progress";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -39,7 +40,7 @@ type NotificationsModule = {
     trigger: { type: string; date: Date };
   }) => Promise<unknown>;
   SchedulableTriggerInputTypes: { DATE: string };
-}
+};
 
 let Notifications: NotificationsModule | null = null;
 try {
@@ -218,6 +219,8 @@ export default function HomeScreen(): React.JSX.Element {
   }, [bgmPlayer]);
 
   const progress = useProgress();
+  const [isLoading, setIsLoading] = useState(true);
+
   const [appear] = useState(() => new Animated.Value(0));
   const [levelUpAnim] = useState(() => new Animated.Value(-120));
 
@@ -741,7 +744,7 @@ export default function HomeScreen(): React.JSX.Element {
     } catch (e) {
       console.error("Error reading parent controls", e);
     }
-  };
+  }
 
   const checkIsBedtime = (bedtimeStr: string) => {
     try {
@@ -975,9 +978,14 @@ export default function HomeScreen(): React.JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      loadSharedProgress();
-      loadArcadeGames();
-      loadStudySessions();
+      setIsLoading(true);
+      Promise.all([
+        loadSharedProgress(),
+        loadArcadeGames(),
+        loadStudySessions(),
+      ]).finally(() => {
+        setIsLoading(false);
+      });
 
       const onBackPress = (): boolean => {
         // Priority 1: Dismiss active modals first
@@ -1099,6 +1107,12 @@ export default function HomeScreen(): React.JSX.Element {
     inputRange: [0, 1],
     outputRange: ["#232a3f", "#4f46e5"],
   });
+
+  if (isLoading) {
+    return (
+      <ChildFriendlyLoader message="Loading your space station & quests... 🚀" />
+    );
+  }
 
   return (
     <GradientSafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -1567,8 +1581,8 @@ export default function HomeScreen(): React.JSX.Element {
             >
               {activeDaySessions.length === 0 ? (
                 <Text style={styles.noSessionsText}>
-                  No study sessions planned for this date. Tap &quot;+ Schedule&quot; to
-                  add one!
+                  No study sessions planned for this date. Tap &quot;+
+                  Schedule&quot; to add one!
                 </Text>
               ) : (
                 activeDaySessions.map((session) => (
