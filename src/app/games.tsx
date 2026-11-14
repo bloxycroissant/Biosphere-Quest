@@ -1,10 +1,17 @@
+import ChildFriendlyLoader from "@/components/ChildFriendlyLoader";
 import { GradientSafeAreaView } from "@/components/gradient-safe-area";
 import { normalizeXpValue, useProgress } from "@/hooks/use-progress";
 import { supabase } from "@/lib/supabase";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAudioPlayer } from "expo-audio";
 import { router, useFocusEffect, useLocalSearchParams } from "expo-router";
-import { startTransition, useCallback, useEffect, useRef, useState } from "react";
+import {
+  startTransition,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Animated,
@@ -44,7 +51,7 @@ interface GameItem {
   tutorial?: {
     objective: string;
     steps: string[];
-  }
+  };
   isPlaceholder?: boolean;
 }
 
@@ -236,7 +243,7 @@ const quizGameItem: GameItem = {
       "Complete all questions to claim your XP reward.",
     ],
   },
-}
+};
 
 const getDifficultyColor = (diff: string) => {
   switch (diff) {
@@ -269,8 +276,7 @@ export default function GamesScreen() {
   const [difficulty, setDifficulty] = useState("All");
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [activeGameRunning, setActiveGameRunning] = useState(false);
-  const [quitConfirmationVisible, setQuitConfirmationVisible] =
-    useState(false);
+  const [quitConfirmationVisible, setQuitConfirmationVisible] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState(1);
   const [selectedTutorialGame, setSelectedTutorialGame] = useState<any | null>(
     null,
@@ -284,6 +290,7 @@ export default function GamesScreen() {
   );
   const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
   const [displayGames, setDisplayGames] = useState<MiniGameMeta[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const musicPlayer = useAudioPlayer(gameThemeMusic);
   const [isMuted, setIsMuted] = useState(false);
@@ -876,8 +883,16 @@ export default function GamesScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      void loadArcadeGames();
-      void fetchLeaderboard();
+      let isMounted = true;
+      setIsLoading(true);
+      void loadArcadeGames().then(() => {
+        void fetchLeaderboard().then(() => {
+          if (isMounted) setIsLoading(false);
+        });
+      });
+      return () => {
+        isMounted = false;
+      };
     }, [leaderboardXp]),
   );
 
@@ -914,6 +929,12 @@ export default function GamesScreen() {
         return <QuizGame {...commonProps} />;
     }
   };
+
+  if (isLoading) {
+    return (
+      <ChildFriendlyLoader message="Powering up the Mini-Game Arcade... 🎮" />
+    );
+  }
 
   return (
     <GradientSafeAreaView style={styles.safeArea} edges={["top"]}>

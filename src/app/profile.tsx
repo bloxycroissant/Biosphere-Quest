@@ -1,10 +1,11 @@
+import ChildFriendlyLoader from "@/components/ChildFriendlyLoader";
 import { GradientSafeAreaView } from "@/components/gradient-safe-area";
 import { normalizeXpValue, useProgress } from "@/hooks/use-progress";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAudioPlayer } from "expo-audio";
 import * as ImagePicker from "expo-image-picker";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Alert,
   Animated,
@@ -91,6 +92,7 @@ export default function ProfileScreen(): React.JSX.Element {
     }
   }, [bgmPlayer]);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (
@@ -555,7 +557,16 @@ export default function ProfileScreen(): React.JSX.Element {
 
   useFocusEffect(
     useCallback(() => {
-      void loadSavedData().then(() => checkAuthStatus());
+      let isMounted = true;
+      setIsLoading(true);
+      void loadSavedData().then(() => {
+        void checkAuthStatus().then(() => {
+          if (isMounted) setIsLoading(false);
+        });
+      });
+      return () => {
+        isMounted = false;
+      };
     }, []),
   );
 
@@ -996,6 +1007,10 @@ export default function ProfileScreen(): React.JSX.Element {
     inputRange: [0, 1],
     outputRange: ["#374b7c", "#625cff"],
   });
+
+  if (isLoading) {
+    return <ChildFriendlyLoader message="Opening Explorer ID & Badges... 🏅" />;
+  }
 
   if (currentView === "editProfile") {
     return (
