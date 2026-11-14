@@ -1,3 +1,4 @@
+import AppTutorialModal from "@/components/AppTutorialModal";
 import ChildFriendlyLoader from "@/components/ChildFriendlyLoader";
 import { GradientSafeAreaView } from "@/components/gradient-safe-area";
 import { normalizeXpValue, useProgress } from "@/hooks/use-progress";
@@ -277,6 +278,7 @@ export default function GamesScreen() {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
   const [activeGameRunning, setActiveGameRunning] = useState(false);
   const [quitConfirmationVisible, setQuitConfirmationVisible] = useState(false);
+  const [appTutorialVisible, setAppTutorialVisible] = useState(false);
   const [selectedGrade, setSelectedGrade] = useState(1);
   const [selectedTutorialGame, setSelectedTutorialGame] = useState<any | null>(
     null,
@@ -390,6 +392,10 @@ export default function GamesScreen() {
   useFocusEffect(
     useCallback(() => {
       const onBackPress = (): boolean => {
+        if (appTutorialVisible) {
+          setAppTutorialVisible(false);
+          return true;
+        }
         if (activeGameRunning) {
           if (quitConfirmationVisible) {
             setQuitConfirmationVisible(false);
@@ -423,6 +429,7 @@ export default function GamesScreen() {
 
       return () => subscription.remove();
     }, [
+      appTutorialVisible,
       activeGameRunning,
       quitConfirmationVisible,
       requestQuitActiveGame,
@@ -947,6 +954,12 @@ export default function GamesScreen() {
           <Text style={styles.cancelText}> Back</Text>
         </Pressable>
         <View style={styles.topBarRightContainer}>
+          <Pressable
+            onPress={() => setAppTutorialVisible(true)}
+            style={styles.muteButton}
+          >
+            <Text style={styles.muteIconText}>❓</Text>
+          </Pressable>
           <Pressable onPress={toggleMute} style={styles.muteButton}>
             <Text style={styles.muteIconText}>{isMuted ? "🔇" : "🔊"}</Text>
           </Pressable>
@@ -1439,6 +1452,12 @@ export default function GamesScreen() {
           </Animated.View>
         </View>
       </Modal>
+
+      <AppTutorialModal
+        visible={appTutorialVisible}
+        onClose={() => setAppTutorialVisible(false)}
+        pageName="games"
+      />
     </GradientSafeAreaView>
   );
 }
