@@ -1,3 +1,4 @@
+import { useAudioPlayer } from "expo-audio";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import {
@@ -101,6 +102,14 @@ export default function AppTutorialModal({
   const steps = TUTORIAL_DATA[pageName] || TUTORIAL_DATA.home;
   const currentStep = steps[currentStepIndex];
 
+  // Sound effects setup using expo-audio
+  const openSound = useAudioPlayer(
+    require("../../../assets/BiosphereQuestSoundEffectsandMusic/Marimba Upbeat Kids Fun (No Copyright Music) by MokkaMusic Junior.mp3"),
+  );
+  const closeSound = useAudioPlayer(
+    require("../../../assets/BiosphereQuestSoundEffectsandMusic/The Game Show Theme Music - (192 Kbps).mp3"),
+  );
+
   const [scaleAnim] = useState(new Animated.Value(0.8));
   const [fadeAnim] = useState(new Animated.Value(0));
   const [pulseAnim] = useState(new Animated.Value(1));
@@ -110,6 +119,19 @@ export default function AppTutorialModal({
       setCurrentStepIndex(0);
       scaleAnim.setValue(0.8);
       fadeAnim.setValue(0);
+
+      // Play open sound effect safely
+      try {
+        if (openSound) {
+          // eslint-disable-next-line react-hooks/immutability
+          openSound.volume = 0.4;
+          openSound.seekTo(0);
+          openSound.play();
+        }
+      } catch (e) {
+        console.log("Audio play error", e);
+      }
+
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -147,11 +169,25 @@ export default function AppTutorialModal({
 
   if (!visible) return null;
 
+  const handleCloseWithSound = () => {
+    try {
+      if (closeSound) {
+        // eslint-disable-next-line react-hooks/immutability
+        closeSound.volume = 0.3;
+        closeSound.seekTo(0);
+        closeSound.play();
+      }
+    } catch (e) {
+      console.log("Audio play error", e);
+    }
+    onClose();
+  };
+
   const handleNext = () => {
     if (currentStepIndex < steps.length - 1) {
       setCurrentStepIndex(currentStepIndex + 1);
     } else {
-      onClose();
+      handleCloseWithSound();
     }
   };
 
@@ -161,7 +197,6 @@ export default function AppTutorialModal({
         <Animated.View
           style={[styles.modalContainer, { transform: [{ scale: scaleAnim }] }]}
         >
-          {/* Animated Glow Halo */}
           <Animated.View
             style={[styles.glowHalo, { transform: [{ scale: pulseAnim }] }]}
           />
@@ -215,7 +250,10 @@ export default function AppTutorialModal({
             </Pressable>
           </View>
 
-          <Pressable style={styles.skipPressable} onPress={onClose}>
+          <Pressable
+            style={styles.skipPressable}
+            onPress={handleCloseWithSound}
+          >
             <Text style={styles.skipText}>Skip Tutorial</Text>
           </Pressable>
         </Animated.View>
