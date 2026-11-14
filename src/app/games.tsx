@@ -1,4 +1,5 @@
 import AppTutorialModal from "@/components/AppTutorialModal";
+
 import ChildFriendlyLoader from "@/components/ChildFriendlyLoader";
 import { GradientSafeAreaView } from "@/components/gradient-safe-area";
 import { normalizeXpValue, useProgress } from "@/hooks/use-progress";
