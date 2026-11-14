@@ -1,93 +1,225 @@
-import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import { Image } from "expo-image";
+import { useEffect, useState } from "react";
 import {
+    Animated,
+    Dimensions,
     Modal,
     Pressable,
     StyleSheet,
     Text,
-    View
+    View,
 } from "react-native";
 
-export interface TutorialStep {
+const { width } = Dimensions.get("window");
+
+interface TutorialStep {
   title: string;
   description: string;
-  icon: string;
+  mascot: any;
+  tip: string;
 }
 
 interface AppTutorialModalProps {
   visible: boolean;
-  steps: TutorialStep[];
-  onComplete: () => void;
-  onSkip: () => void;
+  pageName: "home" | "explore" | "games" | "profile";
+  onClose: () => void;
 }
+
+const TUTORIAL_DATA: Record<string, TutorialStep[]> = {
+  home: [
+    {
+      title: "Welcome to Biosphere Quest! 🚀",
+      description:
+        "This is your main command center where you can track your daily streaks, level progression, and XP.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Astro (Biosphere Quest Mascot).png"),
+      tip: "Check your daily study goals and upcoming calendar events right here.",
+    },
+    {
+      title: "Study Schedule & Calendar 📅",
+      description:
+        "Plan your learning sessions, set custom reminders, and keep your daily streak alive effortlessly.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Stella (Biosphere Quest Mascot).png"),
+      tip: "Tap '+ Schedule' on the calendar widget to add your personal study blocks.",
+    },
+  ],
+  explore: [
+    {
+      title: "Explore Curriculum & Missions 🔬",
+      description:
+        "Dive into MATATAG-aligned Grade 1–6 Math and Science lessons designed for interactive learning.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Astro (Biosphere Quest Mascot).png"),
+      tip: "Tap on any subject domain to view interactive missions and comprehensive notes.",
+    },
+    {
+      title: "Earn XP & Complete Lessons ⭐",
+      description:
+        "Each completed mission rewards you with XP and unlocks the next exciting challenge in your learning path.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Stella (Biosphere Quest Mascot).png"),
+      tip: "Stuck on a concept? Tap 'Comprehensive Notes' for a full reference guide.",
+    },
+  ],
+  games: [
+    {
+      title: "Mini-Game Arcade 🎮",
+      description:
+        "Practice your knowledge with fast-paced educational mini-games like Flashcards, Word Scramble, and Number Ninja!",
+      mascot: require("../../../assets/BiosphereQuestAssets/Astro (Biosphere Quest Mascot).png"),
+      tip: "Earn massive XP bonuses to climb the Weekly Champions Leaderboard.",
+    },
+    {
+      title: "Defuse the Codebreaker Vault 🔥",
+      description:
+        "Test your expert problem-solving skills against challenging combinations for maximum rewards.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Stella (Biosphere Quest Mascot).png"),
+      tip: "Use the filter buttons at the top to sort games by difficulty.",
+    },
+  ],
+  profile: [
+    {
+      title: "Your Explorer ID & Stats 🏅",
+      description:
+        "Customize your avatar, check your total earned XP, and view all unlocked badges and achievements.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Astro (Biosphere Quest Mascot).png"),
+      tip: "Tap 'Edit Profile' to update your explorer details anytime.",
+    },
+    {
+      title: "Track Your Study Schedule 📅",
+      description:
+        "Review all your active study sessions and completed milestones in one convenient place.",
+      mascot: require("../../../assets/BiosphereQuestAssets/Stella (Biosphere Quest Mascot).png"),
+      tip: "Mark study sessions as complete to instantly claim bonus XP!",
+    },
+  ],
+};
 
 export default function AppTutorialModal({
   visible,
-  steps,
-  onComplete,
-  onSkip,
-}: AppTutorialModalProps): React.JSX.Element {
-  const [currentIndex, setCurrentIndex] = useState(0);
+  pageName,
+  onClose,
+}: AppTutorialModalProps) {
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const steps = TUTORIAL_DATA[pageName] || TUTORIAL_DATA.home;
+  const currentStep = steps[currentStepIndex];
 
-  if (!visible || steps.length === 0) return <></>;
+  const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [pulseAnim] = useState(new Animated.Value(1));
 
-  const currentStep = steps[currentIndex];
-  const isLast = currentIndex === steps.length - 1;
+  useEffect(() => {
+    if (visible) {
+      setCurrentStepIndex(0);
+      scaleAnim.setValue(0.8);
+      fadeAnim.setValue(0);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 70,
+          friction: 7,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [visible, pageName]);
+
+  useEffect(() => {
+    const pulse = Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 1.08,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+    );
+    pulse.start();
+    return () => pulse.stop();
+  }, [pulseAnim]);
+
+  if (!visible) return null;
 
   const handleNext = () => {
-    if (isLast) {
-      onComplete();
+    if (currentStepIndex < steps.length - 1) {
+      setCurrentStepIndex(currentStepIndex + 1);
     } else {
-      setCurrentIndex((prev) => prev + 1);
+      onClose();
     }
   };
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onSkip}
-    >
-      <View style={styles.backdrop}>
-        <View style={styles.container}>
-          <LinearGradient
-            colors={["#1e293b", "#0f172a"]}
-            style={styles.cardGradient}
-          >
-            <View style={styles.topRow}>
-              <Text style={styles.stepIndicator}>
-                Step {currentIndex + 1} of {steps.length}
-              </Text>
-              <Pressable onPress={onSkip} hitSlop={10}>
-                <Text style={styles.skipText}>Skip</Text>
+    <Modal visible={visible} transparent animationType="none">
+      <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
+        <Animated.View
+          style={[styles.modalContainer, { transform: [{ scale: scaleAnim }] }]}
+        >
+          {/* Animated Glow Halo */}
+          <Animated.View
+            style={[styles.glowHalo, { transform: [{ scale: pulseAnim }] }]}
+          />
+
+          <View style={styles.mascotContainer}>
+            <Image
+              source={currentStep.mascot}
+              style={styles.mascotImage}
+              contentFit="contain"
+            />
+          </View>
+
+          <View style={styles.badgePill}>
+            <Text style={styles.badgeText}>
+              STEP {currentStepIndex + 1} OF {steps.length}
+            </Text>
+          </View>
+
+          <Text style={styles.title}>{currentStep.title}</Text>
+          <Text style={styles.description}>{currentStep.description}</Text>
+
+          <View style={styles.tipBox}>
+            <Text style={styles.tipIcon}>💡</Text>
+            <Text style={styles.tipText}>{currentStep.tip}</Text>
+          </View>
+
+          <View style={styles.dotsRow}>
+            {steps.map((_, i) => (
+              <View
+                key={i}
+                style={[styles.dot, i === currentStepIndex && styles.activeDot]}
+              />
+            ))}
+          </View>
+
+          <View style={styles.buttonRow}>
+            {currentStepIndex > 0 && (
+              <Pressable
+                style={styles.backButton}
+                onPress={() => setCurrentStepIndex(currentStepIndex - 1)}
+              >
+                <Text style={styles.backButtonText}>Back</Text>
               </Pressable>
-            </View>
-
-            <View style={styles.iconBubble}>
-              <Text style={styles.iconText}>{currentStep.icon}</Text>
-            </View>
-
-            <Text style={styles.title}>{currentStep.title}</Text>
-            <Text style={styles.description}>{currentStep.description}</Text>
-
-            <View style={styles.dotsRow}>
-              {steps.map((_, idx) => (
-                <View
-                  key={idx}
-                  style={[styles.dot, idx === currentIndex && styles.dotActive]}
-                />
-              ))}
-            </View>
-
+            )}
             <Pressable style={styles.nextButton} onPress={handleNext}>
               <Text style={styles.nextButtonText}>
-                {isLast ? "Let's Go! 🚀" : "Next ➔"}
+                {currentStepIndex === steps.length - 1
+                  ? "Got it! 🚀"
+                  : "Next →"}
               </Text>
             </Pressable>
-          </LinearGradient>
-        </View>
-      </View>
+          </View>
+
+          <Pressable style={styles.skipPressable} onPress={onClose}>
+            <Text style={styles.skipText}>Skip Tutorial</Text>
+          </Pressable>
+        </Animated.View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -95,54 +227,68 @@ export default function AppTutorialModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: "rgba(3, 7, 18, 0.85)",
+    backgroundColor: "rgba(4, 9, 22, 0.88)",
     justifyContent: "center",
     alignItems: "center",
-    padding: 24,
+    padding: 20,
+    zIndex: 9999,
   },
-  container: {
+  modalContainer: {
     width: "100%",
-    maxWidth: 380,
+    maxWidth: Math.min(width - 32, 380),
+    backgroundColor: "#111b36",
     borderRadius: 24,
-    overflow: "hidden",
-    borderWidth: 1,
-    borderColor: "#334155",
-  },
-  cardGradient: {
+    borderWidth: 2,
+    borderColor: "#4f46e5",
     padding: 24,
     alignItems: "center",
+    position: "relative",
+    shadowColor: "#4f46e5",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 12,
   },
-  topRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%",
-    marginBottom: 16,
+  glowHalo: {
+    position: "absolute",
+    top: -15,
+    left: -15,
+    right: -15,
+    bottom: -15,
+    borderRadius: 30,
+    borderWidth: 1.5,
+    borderColor: "rgba(99, 102, 241, 0.3)",
+    zIndex: -1,
   },
-  stepIndicator: {
-    color: "#38bdf8",
-    fontSize: 12,
-    fontWeight: "900",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
-  skipText: {
-    color: "#94a3b8",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  iconBubble: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: "rgba(56, 189, 248, 0.15)",
+  mascotContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(79, 70, 229, 0.2)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 16,
+    marginBottom: 14,
+    borderWidth: 1.5,
+    borderColor: "#6366f1",
+  },
+  mascotImage: {
+    width: 60,
+    height: 60,
+  },
+  badgePill: {
+    backgroundColor: "rgba(56, 189, 248, 0.15)",
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: "rgba(56, 189, 248, 0.3)",
   },
-  iconText: {
-    fontSize: 32,
+  badgeText: {
+    color: "#38bdf8",
+    fontSize: 10,
+    fontWeight: "900",
+    letterSpacing: 0.8,
   },
   title: {
     color: "#ffffff",
@@ -153,15 +299,38 @@ const styles = StyleSheet.create({
   },
   description: {
     color: "#cbd5e1",
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "600",
     textAlign: "center",
-    lineHeight: 20,
-    marginBottom: 20,
+    lineHeight: 19,
+    marginBottom: 16,
+  },
+  tipBox: {
+    flexDirection: "row",
+    backgroundColor: "#19264a",
+    borderRadius: 12,
+    padding: 12,
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 18,
+    borderWidth: 1,
+    borderColor: "#2a3d6b",
+    width: "100%",
+  },
+  tipIcon: {
+    fontSize: 18,
+  },
+  tipText: {
+    color: "#93c5fd",
+    fontSize: 11.5,
+    fontWeight: "700",
+    flex: 1,
+    lineHeight: 16,
   },
   dotsRow: {
     flexDirection: "row",
     gap: 6,
-    marginBottom: 20,
+    marginBottom: 18,
   },
   dot: {
     width: 6,
@@ -169,20 +338,53 @@ const styles = StyleSheet.create({
     borderRadius: 3,
     backgroundColor: "#334155",
   },
-  dotActive: {
+  activeDot: {
     width: 20,
     backgroundColor: "#38bdf8",
   },
-  nextButton: {
-    backgroundColor: "#4f46e5",
+  buttonRow: {
+    flexDirection: "row",
+    gap: 10,
     width: "100%",
-    paddingVertical: 14,
+  },
+  backButton: {
+    flex: 1,
+    backgroundColor: "#1e293b",
     borderRadius: 14,
+    paddingVertical: 12,
     alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#334155",
+  },
+  backButtonText: {
+    color: "#94a3b8",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  nextButton: {
+    flex: 2,
+    backgroundColor: "#4f46e5",
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: "center",
+    shadowColor: "#4f46e5",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
   },
   nextButtonText: {
     color: "#ffffff",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "900",
+  },
+  skipPressable: {
+    marginTop: 14,
+    paddingVertical: 4,
+  },
+  skipText: {
+    color: "#64748b",
+    fontSize: 11.5,
+    fontWeight: "800",
   },
 });
